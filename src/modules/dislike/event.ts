@@ -1,14 +1,16 @@
 import { EventEmitter } from 'events'
-import { getUserSpace } from '@/user'
+import type { UserSpace } from '@/user'
 
 export class DislikeEvent extends EventEmitter {
+  constructor(private readonly userSpace: UserSpace) {
+    super()
+  }
   async dislike_data_overwrite(
     userName: string,
     dislikeData: LX.Dislike.DislikeRules,
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.dislikeManage.dislikeDataManage.overwriteDislikeInfo(
+    await this.userSpace.dislikeManage.dislikeDataManage.overwriteDislikeInfo(
       dislikeData,
     )
     this.emit('dislike_data_overwrite', userName, dislikeData, isRemote)
@@ -19,14 +21,12 @@ export class DislikeEvent extends EventEmitter {
     musicInfo: LX.Dislike.DislikeMusicInfo[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.dislikeManage.dislikeDataManage.addDislikeInfo(musicInfo)
+    await this.userSpace.dislikeManage.dislikeDataManage.addDislikeInfo(musicInfo)
     this.emit('dislike_music_add', userName, musicInfo, isRemote)
   }
 
   async dislike_music_clear(userName: string, isRemote: boolean = false) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.dislikeManage.dislikeDataManage.overwriteDislikeInfo('')
+    await this.userSpace.dislikeManage.dislikeDataManage.overwriteDislikeInfo('')
     this.emit('dislike_music_clear', userName, isRemote)
   }
 }

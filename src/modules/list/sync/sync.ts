@@ -1,6 +1,6 @@
 // import { SYNC_CLOSE_CODE } from '@/constants'
 import { SYNC_CLOSE_CODE, TRANS_MODE } from '@/constants'
-import { getUserConfig, getUserSpace } from '@/user'
+import { getUserConfig } from '@/user'
 import { buildUserListInfoFull } from '../utils'
 
 // import { LIST_IDS } from '@common/constants'
@@ -36,7 +36,7 @@ const getRemoteListMD5 = async (socket: LX.Socket): Promise<string> => {
 const getLocalListData = async (
   socket: LX.Socket,
 ): Promise<LX.Sync.List.ListData> => {
-  return getUserSpace(socket.userInfo.name).listManage.getListData()
+  return socket.context.userSpace.listManage.getListData()
 }
 const getSyncMode = async (
   socket: LX.Socket,
@@ -53,12 +53,12 @@ const setLocalList = async (
   socket: LX.Socket,
   listData: LX.Sync.List.ListData,
 ) => {
-  await global.event_list.list_data_overwrite(
+  await socket.context.listEvent.list_data_overwrite(
     socket.userInfo.name,
     listData,
     true,
   )
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   return await userSpace.listManage.createSnapshot()
 }
 
@@ -70,7 +70,7 @@ const overwriteRemoteListData = async (
 ) => {
   const action = { action: 'list_data_overwrite', data: listData } as const
   const tasks: Array<Promise<void>> = []
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   socket.broadcast((client) => {
     if (
       excludeIds.includes(client.keyInfo.clientId) ||
@@ -104,7 +104,7 @@ const setRemotelList = async (
   key: string,
 ): Promise<void> => {
   await socket.remoteQueueList.list_sync_set_list_data(listData)
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   await userSpace.listManage.updateDeviceSnapshotKey(
     socket.keyInfo.clientId,
     key,
@@ -280,7 +280,7 @@ const handleSyncList = async (socket: LX.Socket) => {
     getRemoteListData(socket),
     getLocalListData(socket),
   ])
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   const clientId = socket.keyInfo.clientId
   if (
     localListData.defaultList.length ||
@@ -374,7 +374,7 @@ const mergeListDataFromSnapshot = (
 }
 const checkListLatest = async (socket: LX.Socket) => {
   const remoteListMD5 = await getRemoteListMD5(socket)
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   const userCurrentListInfoKey =
     await userSpace.listManage.getDeviceCurrentSnapshotKey(
       socket.keyInfo.clientId,
@@ -510,7 +510,7 @@ const syncList = async (socket: LX.Socket) => {
   if (!socket.feature.list)
     throw new Error('list feature options not available')
   if (!socket.feature.list.skipSnapshot) {
-    const user = getUserSpace(socket.userInfo.name)
+    const user = socket.context.userSpace
     const userCurrentListInfoKey =
       await user.listManage.getDeviceCurrentSnapshotKey(socket.keyInfo.clientId)
     if (userCurrentListInfoKey) {

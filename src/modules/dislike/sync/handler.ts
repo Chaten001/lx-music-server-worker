@@ -1,37 +1,34 @@
 import { SYNC_CLOSE_CODE } from '@/constants'
-import { getUserSpace } from '@/user'
 
-const handleListAction = async (
-  userName: string,
+const handleDislikeAction = async (
+  socket: LX.Socket,
   param: LX.Sync.Dislike.ActionList,
 ) => {
+  const userName = socket.userInfo.name
+  const { dislikeEvent, userSpace } = socket.context
+
   switch (param.action) {
     case 'dislike_data_overwrite':
-      await global.event_dislike.dislike_data_overwrite(
-        userName,
-        param.data,
-        true,
-      )
+      await dislikeEvent.dislike_data_overwrite(userName, param.data, true)
       break
     case 'dislike_music_add':
-      await global.event_dislike.dislike_music_add(userName, param.data, true)
+      await dislikeEvent.dislike_music_add(userName, param.data, true)
       break
     case 'dislike_music_clear':
-      await global.event_dislike.dislike_music_clear(userName, true)
+      await dislikeEvent.dislike_music_clear(userName, true)
       break
     default:
       throw new Error('unknown dislike sync action')
   }
-  const userSpace = getUserSpace(userName)
-  const key = await userSpace.dislikeManage.createSnapshot()
-  return key
+
+  return userSpace.dislikeManage.createSnapshot()
 }
 
 const handler: LX.Sync.ServerSyncHandlerDislikeActions<LX.Socket> = {
   async onDislikeSyncAction(socket, action) {
     if (!socket.moduleReadys?.dislike) return
-    const key = await handleListAction(socket.userInfo.name, action)
-    const userSpace = getUserSpace(socket.userInfo.name)
+    const key = await handleDislikeAction(socket, action)
+    const userSpace = socket.context.userSpace
     await userSpace.dislikeManage.updateDeviceSnapshotKey(
       socket.keyInfo.clientId,
       key,

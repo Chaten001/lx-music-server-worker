@@ -11,18 +11,6 @@ export interface UserSpace {
   flush: () => Promise<void>
 }
 
-// 模块级别单例，由 UserSyncDO 在 blockConcurrencyWhile 中初始化
-let _userSpace: UserSpace | null = null
-
-export const setUserSpace = (userSpace: UserSpace) => {
-  _userSpace = userSpace
-}
-
-export const getUserSpace = (_name?: string): UserSpace => {
-  if (!_userSpace) throw new Error('UserSpace not initialized')
-  return _userSpace
-}
-
 export const createUserSpace = (
   devicesInfo: DevicesInfo,
   storage: DurableObjectStorage,

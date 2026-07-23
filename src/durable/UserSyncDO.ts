@@ -1,11 +1,10 @@
 import { createMsg2call } from 'message2call'
 import { SYNC_CLOSE_CODE, SYNC_CODE } from '@/constants'
-import type { DislikeEventType } from '@/modules/dislike/event'
 import { DislikeEvent } from '@/modules/dislike/event'
-import type { ListEventType } from '@/modules/list/event'
 import { ListEvent } from '@/modules/list/event'
 import { callObj, sync } from '@/sync'
-import { createUserSpace, setUserSpace, type UserSpace } from '@/user'
+import type { SyncContext } from '@/sync/context'
+import { createUserSpace, type UserSpace } from '@/user'
 import {
   createClientKeyInfo,
   getUserConfig,
@@ -33,6 +32,7 @@ export class UserSyncDO implements DurableObject {
   private ipFailures = new Map<string, { count: number; resetAt: number }>()
   private pingInterval: ReturnType<typeof setInterval> | null = null
   private userSpace: UserSpace | null = null
+  private context: SyncContext | null = null
   private readonly listSyncRef: { current: string | null } = { current: null }
   private readonly dislikeSyncRef: { current: string | null } = {
     current: null,
@@ -113,11 +113,11 @@ export class UserSyncDO implements DurableObject {
       maxSnapshotNum,
     )
     this.userSpace = userSpace
-    setUserSpace(userSpace)
-
-    if (!global.event_list) global.event_list = new ListEvent() as ListEventType
-    if (!global.event_dislike)
-      global.event_dislike = new DislikeEvent() as DislikeEventType
+    this.context = {
+      userSpace,
+      listEvent: new ListEvent(userSpace),
+      dislikeEvent: new DislikeEvent(userSpace),
+    }
   }
 
   private async initialize() {
@@ -364,6 +364,8 @@ export class UserSyncDO implements DurableObject {
     keyInfo: LX.Sync.KeyInfo,
     user: LX.User,
   ): LX.Socket {
+    if (!this.context) throw new Error('SyncContext not initialized')
+    const context = this.context
     let disconnected = false
     const closeHandlers: Array<(err: Error) => void> = []
 
@@ -388,6 +390,7 @@ export class UserSyncDO implements DurableObject {
     })
 
     const socket: LX.Socket = {
+      context,
       keyInfo,
       userInfo: user,
       isReady: false,

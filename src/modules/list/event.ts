@@ -1,14 +1,16 @@
 import { EventEmitter } from 'events'
-import { getUserSpace } from '@/user'
+import type { UserSpace } from '@/user'
 
 export class ListEvent extends EventEmitter {
+  constructor(private readonly userSpace: UserSpace) {
+    super()
+  }
   async list_data_overwrite(
     userName: string,
     listData: MakeOptional<LX.List.ListDataFull, 'tempList'>,
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listDataOverwrite(listData)
+    await this.userSpace.listManage.listDataManage.listDataOverwrite(listData)
     this.emit('list_data_overwrite', userName, listData, isRemote)
   }
 
@@ -18,9 +20,8 @@ export class ListEvent extends EventEmitter {
     lists: LX.List.UserListInfo[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
     for (const list of lists) {
-      await userSpace.listManage.listDataManage.userListCreate({
+      await this.userSpace.listManage.listDataManage.userListCreate({
         ...list,
         position,
       })
@@ -33,8 +34,7 @@ export class ListEvent extends EventEmitter {
     ids: string[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.userListsRemove(ids)
+    await this.userSpace.listManage.listDataManage.userListsRemove(ids)
     this.emit('list_remove', userName, ids, isRemote)
   }
 
@@ -43,8 +43,7 @@ export class ListEvent extends EventEmitter {
     lists: LX.List.UserListInfo[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.userListsUpdate(lists)
+    await this.userSpace.listManage.listDataManage.userListsUpdate(lists)
     this.emit('list_update', userName, lists, isRemote)
   }
 
@@ -54,8 +53,7 @@ export class ListEvent extends EventEmitter {
     ids: string[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.userListsUpdatePosition(
+    await this.userSpace.listManage.listDataManage.userListsUpdatePosition(
       position,
       ids,
     )
@@ -68,8 +66,7 @@ export class ListEvent extends EventEmitter {
     musicInfos: LX.Music.MusicInfo[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicOverwrite(
+    await this.userSpace.listManage.listDataManage.listMusicOverwrite(
       listId,
       musicInfos,
     )
@@ -83,8 +80,7 @@ export class ListEvent extends EventEmitter {
     addMusicLocationType: LX.AddMusicLocationType,
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicAdd(
+    await this.userSpace.listManage.listDataManage.listMusicAdd(
       listId,
       musicInfos,
       addMusicLocationType,
@@ -107,8 +103,7 @@ export class ListEvent extends EventEmitter {
     addMusicLocationType: LX.AddMusicLocationType,
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicMove(
+    await this.userSpace.listManage.listDataManage.listMusicMove(
       fromId,
       toId,
       musicInfos,
@@ -131,8 +126,7 @@ export class ListEvent extends EventEmitter {
     ids: string[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicRemove(listId, ids)
+    await this.userSpace.listManage.listDataManage.listMusicRemove(listId, ids)
     this.emit('list_music_remove', userName, listId, ids, isRemote)
   }
 
@@ -141,8 +135,7 @@ export class ListEvent extends EventEmitter {
     musicInfos: LX.List.ListActionMusicUpdate,
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicUpdateInfo(musicInfos)
+    await this.userSpace.listManage.listDataManage.listMusicUpdateInfo(musicInfos)
     this.emit('list_music_update', userName, musicInfos, isRemote)
   }
 
@@ -151,8 +144,7 @@ export class ListEvent extends EventEmitter {
     ids: string[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicClear(ids)
+    await this.userSpace.listManage.listDataManage.listMusicClear(ids)
     this.emit('list_music_clear', userName, ids, isRemote)
   }
 
@@ -163,8 +155,7 @@ export class ListEvent extends EventEmitter {
     ids: string[],
     isRemote: boolean = false,
   ) {
-    const userSpace = getUserSpace(userName)
-    await userSpace.listManage.listDataManage.listMusicUpdatePosition(
+    await this.userSpace.listManage.listDataManage.listMusicUpdatePosition(
       listId,
       position,
       ids,

@@ -1,5 +1,6 @@
 declare namespace LX {
   interface Socket {
+    context: import('@/sync/context').SyncContext
     keyInfo: LX.Sync.KeyInfo
     userInfo: LX.User
     isReady: boolean

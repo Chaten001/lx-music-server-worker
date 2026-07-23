@@ -1,6 +1,5 @@
 // import { SYNC_CLOSE_CODE } from '@/constants'
 import { SYNC_CLOSE_CODE, TRANS_MODE } from '@/constants'
-import { getUserSpace } from '@/user'
 import { filterRules } from '../utils'
 
 // import { LIST_IDS } from '@common/constants'
@@ -23,7 +22,7 @@ const getRemoteDataMD5 = async (socket: LX.Socket): Promise<string> => {
 const getLocalListData = async (
   socket: LX.Socket,
 ): Promise<LX.Dislike.DislikeRules> => {
-  return getUserSpace(socket.userInfo.name).dislikeManage.getDislikeRules()
+  return socket.context.userSpace.dislikeManage.getDislikeRules()
 }
 const getSyncMode = async (
   socket: LX.Socket,
@@ -40,12 +39,12 @@ const setLocalList = async (
   socket: LX.Socket,
   listData: LX.Dislike.DislikeRules,
 ) => {
-  await global.event_dislike.dislike_data_overwrite(
+  await socket.context.dislikeEvent.dislike_data_overwrite(
     socket.userInfo.name,
     listData,
     true,
   )
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   return await userSpace.dislikeManage.createSnapshot()
 }
 
@@ -57,7 +56,7 @@ const overwriteRemoteListData = async (
 ) => {
   const action = { action: 'dislike_data_overwrite', data: listData } as const
   const tasks: Array<Promise<void>> = []
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   socket.broadcast((client) => {
     if (
       excludeIds.includes(client.keyInfo.clientId) ||
@@ -91,7 +90,7 @@ const setRemotelList = async (
   key: string,
 ): Promise<void> => {
   await socket.remoteQueueDislike.dislike_sync_set_list_data(listData)
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   await userSpace.dislikeManage.updateDeviceSnapshotKey(
     socket.keyInfo.clientId,
     key,
@@ -149,7 +148,7 @@ const handleSyncList = async (socket: LX.Socket) => {
     getRemoteListData(socket),
     getLocalListData(socket),
   ])
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   const clientId = socket.keyInfo.clientId
   if (localListData.length) {
     if (remoteListData.length) {
@@ -212,7 +211,7 @@ const mergeDataFromSnapshot = (
 }
 const checkListLatest = async (socket: LX.Socket) => {
   const remoteListMD5 = await getRemoteDataMD5(socket)
-  const userSpace = getUserSpace(socket.userInfo.name)
+  const userSpace = socket.context.userSpace
   const userCurrentListInfoKey =
     await userSpace.dislikeManage.getDeviceCurrentSnapshotKey(
       socket.keyInfo.clientId,
@@ -258,7 +257,7 @@ const syncDislike = async (socket: LX.Socket) => {
   if (!socket.feature.dislike)
     throw new Error('dislike feature options not available')
   if (!socket.feature.dislike.skipSnapshot) {
-    const user = getUserSpace(socket.userInfo.name)
+    const user = socket.context.userSpace
     const userCurrentDislikeInfoKey =
       await user.dislikeManage.getDeviceCurrentSnapshotKey(
         socket.keyInfo.clientId,
